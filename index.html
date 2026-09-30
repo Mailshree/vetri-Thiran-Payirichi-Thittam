@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="EduGenie - Google Gemini powered learning assistant" />
+  <title>EduGenie - AI Learning Assistant</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">E</div>
+      <div>
+        <h1>EduGenie</h1>
+        <p>AI-powered learning assistant</p>
+      </div>
+    </div>
+    <span id="statusBadge" class="status-badge">Checking AI status...</span>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <span class="eyebrow">LEARN • PRACTICE • UNDERSTAND</span>
+        <h2>Your personal study companion.</h2>
+        <p>
+          Ask questions, simplify difficult concepts, generate quizzes,
+          summarize study material, or build a learning path.
+        </p>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="card input-card">
+        <div class="card-heading">
+          <div>
+            <h3>What would you like to learn?</h3>
+            <p>Select a task and provide your study content.</p>
+          </div>
+        </div>
+
+        <label for="task">Task</label>
+        <select id="task">
+          <option value="qa">Ask a Question</option>
+          <option value="explain">Explain a Concept</option>
+          <option value="quiz">Generate Quiz</option>
+          <option value="summarize">Summarize Text</option>
+          <option value="learn">Learning Path</option>
+        </select>
+
+        <div id="commonInput">
+          <label id="inputLabel" for="inputText">Question</label>
+          <textarea id="inputText" rows="9" placeholder="Example: Which is the largest ocean?"></textarea>
+        </div>
+
+        <div id="explainOptions" class="options hidden">
+          <label for="level">Learner level</label>
+          <select id="level">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+
+        <div id="quizOptions" class="options hidden">
+          <label for="questionCount">Number of questions</label>
+          <select id="questionCount">
+            <option value="3" selected>3</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div id="summaryOptions" class="options hidden">
+          <label for="maxSentences">Maximum sentences</label>
+          <select id="maxSentences">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div id="learnOptions" class="options hidden learn-grid">
+          <div>
+            <label for="learnLevel">Level</label>
+            <select id="learnLevel">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+          <div>
+            <label for="hours">Hours / week</label>
+            <input id="hours" type="number" min="1" max="40" value="5" />
+          </div>
+          <div>
+            <label for="weeks">Weeks</label>
+            <input id="weeks" type="number" min="1" max="52" value="6" />
+          </div>
+        </div>
+
+        <button id="submitBtn" class="primary-btn">
+          <span id="btnText">Ask EduGenie</span>
+          <span id="spinner" class="spinner hidden"></span>
+        </button>
+      </div>
+
+      <div class="card result-card">
+        <div class="card-heading">
+          <div>
+            <h3>Result</h3>
+            <p id="resultHint">Your AI-generated response will appear here.</p>
+          </div>
+        </div>
+        <div id="result" class="result empty">
+          <div class="empty-icon">✦</div>
+          <p>Choose a task and submit your question or study material.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="feature-grid">
+      <article class="feature-card">
+        <span>01</span>
+        <h3>Q&A</h3>
+        <p>Get concise answers to academic questions.</p>
+      </article>
+      <article class="feature-card">
+        <span>02</span>
+        <h3>Explain</h3>
+        <p>Turn difficult concepts into easy explanations.</p>
+      </article>
+      <article class="feature-card">
+        <span>03</span>
+        <h3>Quiz</h3>
+        <p>Practice with generated multiple-choice questions.</p>
+      </article>
+      <article class="feature-card">
+        <span>04</span>
+        <h3>Study Path</h3>
+        <p>Build a beginner-to-advanced learning roadmap.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <p>EduGenie • Built with FastAPI + Google Gemini</p>
+  </footer>
+
+  <script>
+    const task = document.getElementById("task");
+    const inputText = document.getElementById("inputText");
+    const inputLabel = document.getElementById("inputLabel");
+    const submitBtn = document.getElementById("submitBtn");
+    const btnText = document.getElementById("btnText");
+    const spinner = document.getElementById("spinner");
+    const result = document.getElementById("result");
+    const resultHint = document.getElementById("resultHint");
+
+    const explainOptions = document.getElementById("explainOptions");
+    const quizOptions = document.getElementById("quizOptions");
+    const summaryOptions = document.getElementById("summaryOptions");
+    const learnOptions = document.getElementById("learnOptions");
+
+    const placeholders = {
+      qa: "Example: Which is the largest ocean?",
+      explain: "Example: Explain recursion in simple terms.",
+      quiz: "Paste a chapter, paragraph, or topic here.",
+      summarize: "Paste the educational passage you want to summarize.",
+      learn: "Example: SQL database management"
+    };
+
+    const labels = {
+      qa: "Question",
+      explain: "Concept",
+      quiz: "Study material",
+      summarize: "Text",
+      learn: "Topic"
+    };
+
+    const buttons = {
+      qa: "Ask EduGenie",
+      explain: "Explain Concept",
+      quiz: "Generate Quiz",
+      summarize: "Summarize",
+      learn: "Build Learning Path"
+    };
+
+    function updateTaskUI() {
+      const value = task.value;
+      inputLabel.textContent = labels[value];
+      inputText.placeholder = placeholders[value];
+      btnText.textContent = buttons[value];
+
+      explainOptions.classList.toggle("hidden", value !== "explain");
+      quizOptions.classList.toggle("hidden", value !== "quiz");
+      summaryOptions.classList.toggle("hidden", value !== "summarize");
+      learnOptions.classList.toggle("hidden", value !== "learn");
+
+      inputText.rows = value === "qa" || value === "explain" ? 7 : 10;
+    }
+
+    task.addEventListener("change", updateTaskUI);
+    updateTaskUI();
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function simpleMarkdown(value) {
+      let html = escapeHtml(value);
+      html = html.replace(/^### (.*)$/gm, "<h4>$1</h4>");
+      html = html.replace(/^## (.*)$/gm, "<h3>$1</h3>");
+      html = html.replace(/^# (.*)$/gm, "<h2>$1</h2>");
+      html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      html = html.replace(/^\- (.*)$/gm, "<li>$1</li>");
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, (block) => `<ul>${block}</ul>`);
+      return html.replace(/\n/g, "<br>");
+    }
+
+    function renderQuiz(data) {
+      return `
+        <div class="quiz-title">
+          <h3>${escapeHtml(data.title)}</h3>
+          <p>Select an option to check your answer.</p>
+        </div>
+        ${data.questions.map((q, index) => `
+          <div class="quiz-question" data-correct="${escapeHtml(q.correct_answer)}">
+            <h4>${index + 1}. ${escapeHtml(q.question)}</h4>
+            <div class="quiz-options">
+              ${q.options.map(option => `
+                <button class="option-btn" data-option="${escapeHtml(option)}">
+                  ${escapeHtml(option)}
+                </button>
+              `).join("")}
+            </div>
+            <div class="quiz-feedback hidden"></div>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function bindQuiz() {
+      document.querySelectorAll(".option-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const parent = button.closest(".quiz-question");
+          const correct = parent.dataset.correct;
+          const feedback = parent.querySelector(".quiz-feedback");
+          const selected = button.dataset.option;
+
+          parent.querySelectorAll(".option-btn").forEach(btn => {
+            btn.disabled = true;
+          });
+
+          if (selected === correct) {
+            button.classList.add("correct");
+            feedback.className = "quiz-feedback correct-text";
+            feedback.textContent = "Correct! 🎉";
+          } else {
+            button.classList.add("wrong");
+            feedback.className = "quiz-feedback wrong-text";
+            feedback.textContent = `Not quite. Correct answer: ${correct}`;
+          }
+        });
+      });
+    }
+
+    async function checkStatus() {
+      const badge = document.getElementById("statusBadge");
+      try {
+        const response = await fetch("/api/health");
+        const data = await response.json();
+        if (data.gemini_configured) {
+          badge.textContent = `AI ready • ${data.model}`;
+          badge.className = "status-badge ready";
+        } else {
+          badge.textContent = "API key not configured";
+          badge.className = "status-badge warning";
+        }
+      } catch {
+        badge.textContent = "Backend unavailable";
+        badge.className = "status-badge warning";
+      }
+    }
+
+    submitBtn.addEventListener("click", async () => {
+      const type = task.value;
+      const text = inputText.value.trim();
+
+      if (!text) {
+        result.className = "result error";
+        result.innerHTML = "<p>Please enter some text first.</p>";
+        return;
+      }
+
+      let endpoint = "";
+      let payload = { text };
+
+      if (type === "qa") {
+        endpoint = "/qa";
+      } else if (type === "explain") {
+        endpoint = "/explain";
+        payload.level = document.getElementById("level").value;
+      } else if (type === "quiz") {
+        endpoint = "/quiz";
+        payload.question_count = Number(document.getElementById("questionCount").value);
+      } else if (type === "summarize") {
+        endpoint = "/summarize";
+        payload.max_sentences = Number(document.getElementById("maxSentences").value);
+      } else if (type === "learn") {
+        endpoint = "/learn/recommendations";
+        payload = {
+          topic: text,
+          level: document.getElementById("learnLevel").value,
+          hours_per_week: Number(document.getElementById("hours").value),
+          weeks: Number(document.getElementById("weeks").value)
+        };
+      }
+
+      submitBtn.disabled = true;
+      btnText.textContent = "Thinking...";
+      spinner.classList.remove("hidden");
+      result.className = "result loading";
+      result.innerHTML = "<p>EduGenie is preparing your answer...</p>";
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Request failed.");
+        }
+
+        if (type === "quiz") {
+          result.className = "result";
+          result.innerHTML = renderQuiz(data);
+          bindQuiz();
+        } else if (type === "qa") {
+          result.className = "result markdown";
+          result.innerHTML = simpleMarkdown(data.answer);
+        } else if (type === "explain") {
+          result.className = "result markdown";
+          result.innerHTML = simpleMarkdown(data.explanation);
+        } else if (type === "summarize") {
+          result.className = "result markdown";
+          result.innerHTML = simpleMarkdown(data.summary);
+        } else {
+          result.className = "result markdown";
+          result.innerHTML = `
+            <div class="path-topic"><strong>${escapeHtml(data.topic)}</strong> • ${escapeHtml(data.level)}</div>
+            ${simpleMarkdown(data.plan)}
+          `;
+        }
+
+        resultHint.textContent = "Generated response";
+      } catch (error) {
+        result.className = "result error";
+        result.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+        resultHint.textContent = "Something went wrong";
+      } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = buttons[type];
+        spinner.classList.add("hidden");
+      }
+    });
+
+    checkStatus();
+  </script>
+</body>
+</html>
